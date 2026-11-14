@@ -2,6 +2,8 @@
 
 A minimal, fast AI coding agent for your terminal — built with TypeScript and Bun, distributed as a single binary from GitHub Releases.
 
+> Hosted at [Fiesta1862/opencode](https://github.com/Fiesta1862/opencode). The application is called **minicode**; the repository name is historical and can be renamed later (GitHub keeps redirects).
+
 ```
   minicode
   model gpt-4o-mini · ~/projects/my-app
@@ -197,8 +199,8 @@ The build injects the version from `package.json` and produces `dist/minicode-<o
 On GitHub, with this repository pushed to `Fiesta1862/opencode`:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 `.github/workflows/release.yml` runs type checks and tests, cross-compiles every target, generates checksums, and attaches the binaries plus `install.sh` to the GitHub Release. The `ci.yml` workflow runs on pushes and pull requests.
