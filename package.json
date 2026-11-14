@@ -1,0 +1,38 @@
+{
+  "name": "minicode",
+  "version": "0.1.0",
+  "description": "A minimal, fast, open-source coding agent for your terminal",
+  "type": "module",
+  "bin": {
+    "minicode": "./src/cli.ts"
+  },
+  "scripts": {
+    "dev": "bun run src/cli.ts",
+    "start": "bun run src/cli.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "build": "bun run scripts/build.ts",
+    "build:all": "bun run scripts/build.ts --all"
+  },
+  "keywords": [
+    "cli",
+    "ai",
+    "coding-agent",
+    "tui",
+    "openai",
+    "bun"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fiesta1862/opencode.git"
+  },
+  "homepage": "https://github.com/Fiesta1862/opencode",
+  "bugs": {
+    "url": "https://github.com/Fiesta1862/opencode/issues"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}
