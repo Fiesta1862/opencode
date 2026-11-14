@@ -53,7 +53,7 @@ curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/insta
 Pin a version:
 
 ```bash
-curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | MINICODE_VERSION=0.1.1 sh
+curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | MINICODE_VERSION=0.1.2 sh
 ```
 
 Or download the asset for your platform directly from the [releases page](https://github.com/Fiesta1862/opencode/releases).
@@ -63,12 +63,12 @@ Or download the asset for your platform directly from the [releases page](https:
 Alpine uses musl, so dedicated `linux-*-musl` binaries and `.apk` packages are included. On a minimal system, install `curl` first (`apk add curl`), then either run the installer (it detects Alpine automatically) or install the package directly:
 
 ```bash
-curl -fSLO https://github.com/Fiesta1862/opencode/releases/latest/download/minicode-0.1.1-r0.x86_64.apk
-sudo apk add --allow-untrusted ./minicode-0.1.1-r0.x86_64.apk
+curl -fSLO https://github.com/Fiesta1862/opencode/releases/latest/download/minicode-0.1.2-r0.x86_64.apk
+sudo apk add --allow-untrusted ./minicode-0.1.2-r0.x86_64.apk
 minicode --version
 ```
 
-Use `aarch64` instead of `x86_64` on 64-bit ARM. The package is built with Alpine's `abuild` and signed with a throwaway key generated during the release build, so `--allow-untrusted` is required. Compare its SHA-256 with `checksums.txt` to verify the download. The package pulls `libstdc++` automatically, which is the only shared-library dependency of the Bun musl binary.
+Use `aarch64` instead of `x86_64` on 64-bit ARM. The package is built with Alpine's `abuild` and signed with a throwaway key generated during the release build, so `--allow-untrusted` is required. Compare its SHA-256 with `checksums.txt` to verify the download. The package pulls `libstdc++` automatically, which is the only shared-library dependency of the Bun musl binary. The curl installer also installs `libstdc++` when run as root on Alpine; for non-root installs run `apk add libstdc++` first.
 
 ## Quick start
 
@@ -215,8 +215,8 @@ The build injects the version from `package.json` and produces `dist/minicode-<o
 On GitHub, with this repository pushed to `Fiesta1862/opencode`:
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 `.github/workflows/release.yml` runs type checks and tests, cross-compiles every target, builds the Alpine packages, generates checksums, and attaches the binaries, `.apk` packages, and `install.sh` to the GitHub Release. The `ci.yml` workflow runs on pushes and pull requests.

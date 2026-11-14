@@ -5,10 +5,10 @@
 #
 # Environment variables (set them on the sh side of a pipe):
 #   MINICODE_REPO         GitHub repo, e.g. yourname/minicode (required if not baked in)
-#   MINICODE_VERSION      Version to install, e.g. 0.1.1 (default: latest)
+#   MINICODE_VERSION      Version to install, e.g. 0.1.2 (default: latest)
 #   MINICODE_INSTALL_DIR  Install directory (default: ~/.local/bin)
 #
-#   curl -fsSL .../install.sh | MINICODE_VERSION=0.1.1 sh
+#   curl -fsSL .../install.sh | MINICODE_VERSION=0.1.2 sh
 set -eu
 
 REPO="${MINICODE_REPO:-Fiesta1862/opencode}"
@@ -69,6 +69,23 @@ fi
 command -v curl >/dev/null 2>&1 || fail "curl is required."
 command -v install >/dev/null 2>&1 || fail "the 'install' utility is required."
 
+# Bun's musl builds link against libstdc++, but a minimal Alpine install does
+# not include it. The .apk declares this dependency; the raw binary path must
+# handle it here.
+need_libstdcxx=0
+if [ "$os" = linux ] && [ "$libc" = musl ]; then
+  if ! ls /lib/libstdc++.so.6* /usr/lib/libstdc++.so.6* >/dev/null 2>&1; then
+    if [ "$(id -u)" = 0 ] && command -v apk >/dev/null 2>&1; then
+      info "Installing libstdc++ (required by the musl build)…"
+      if ! apk add --no-cache libstdc++ >/dev/null 2>&1; then
+        need_libstdcxx=1
+      fi
+    else
+      need_libstdcxx=1
+    fi
+  fi
+fi
+
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
@@ -106,6 +123,14 @@ if ! command -v minicode >/dev/null 2>&1; then
   echo "    export PATH=\"${INSTALL_DIR}:\$PATH\""
 fi
 
-echo
-"${INSTALL_DIR}/minicode" --version || true
+if [ "$need_libstdcxx" = 1 ]; then
+  echo
+  warn "libstdc++ is required by the musl build but is not installed."
+  echo "  Alpine: sudo apk add libstdc++"
+  echo "  Or install the .apk package, which pulls it automatically:"
+  echo "    https://github.com/${REPO}/releases/latest"
+else
+  echo
+  "${INSTALL_DIR}/minicode" --version || true
+fi
 echo "Run 'minicode --help' to get started."

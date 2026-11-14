@@ -84,7 +84,8 @@ const entries = new Map<string, string>();
 if (existsSync(checksumsFile)) {
   for (const line of readFileSync(checksumsFile, "utf8").split("\n")) {
     const match = /^([a-f0-9]{64})  (.+)$/.exec(line);
-    if (match) entries.set(match[2]!, match[1]!);
+    // Drop entries for files that no longer exist (e.g. packages from an older version).
+    if (match && existsSync(path.join(dist, match[2]!))) entries.set(match[2]!, match[1]!);
   }
 }
 for (const packageFile of packages) {
