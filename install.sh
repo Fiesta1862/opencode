@@ -3,10 +3,12 @@
 #
 #   curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | bash
 #
-# Environment variables:
+# Environment variables (set them on the bash side of a pipe):
 #   MINICODE_REPO         GitHub repo, e.g. yourname/minicode (required if not baked in)
 #   MINICODE_VERSION      Version to install, e.g. 0.1.0 (default: latest)
 #   MINICODE_INSTALL_DIR  Install directory (default: ~/.local/bin)
+#
+#   curl -fsSL .../install.sh | MINICODE_VERSION=0.1.0 bash
 set -euo pipefail
 
 REPO="${MINICODE_REPO:-Fiesta1862/opencode}"

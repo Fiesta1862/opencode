@@ -39,12 +39,18 @@ From GitHub Releases (Linux x64/arm64, macOS x64/arm64, Windows x64):
 curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | bash
 ```
 
-The installer downloads the right binary, verifies its SHA-256 checksum, and installs to `~/.local/bin` (override with `MINICODE_INSTALL_DIR`).
+The installer downloads the right binary, verifies its SHA-256 checksum, and installs to `~/.local/bin`.
+
+To install somewhere else (remember: variables go on the `bash` side of the pipe):
+
+```bash
+curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | MINICODE_INSTALL_DIR="$HOME/bin" bash
+```
 
 Pin a version:
 
 ```bash
-MINICODE_VERSION=0.1.0 curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | MINICODE_VERSION=0.1.0 bash
 ```
 
 Or download the asset for your platform directly from the [releases page](https://github.com/Fiesta1862/opencode/releases).
