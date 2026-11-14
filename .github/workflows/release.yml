@@ -30,6 +30,9 @@ jobs:
       - name: Build binaries
         run: bun run build:all
 
+      - name: Build Alpine packages
+        run: bun run package:apk
+
       - name: Prepare release assets
         run: |
           cp install.sh dist/install.sh

@@ -29,16 +29,17 @@ A minimal, fast AI coding agent for your terminal — built with TypeScript and 
 - **Real tools** — read, write, edit, glob, grep, list files, and run shell commands.
 - **Safe by default** — file edits and commands require approval; paths are sandboxed to the current workspace, including symlink escapes.
 - **Sessions** — conversations are saved automatically. Resume with `--continue` or `--session <id>`.
-- **Single binary** — no Node, Bun, or `node_modules` required to run a release build.
+- **Single binary** — no Node, Bun, or `node_modules` required to run a release build. glibc and musl (Alpine) builds included.
+- **Alpine packages** — installable `.apk` packages for `x86_64` and `aarch64`.
 - **Scriptable** — `minicode run "..."` for one-shot tasks, with a read-only-by-default policy unless `--yes` is passed.
 - **No runtime dependencies** — the CLI and its TUI are implemented with the standard library.
 
 ## Install
 
-From GitHub Releases (Linux x64/arm64, macOS x64/arm64, Windows x64):
+From GitHub Releases (Linux x64/arm64 — glibc and musl, macOS x64/arm64, Windows x64):
 
 ```bash
-curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | sh
 ```
 
 The installer downloads the right binary, verifies its SHA-256 checksum, and installs to `~/.local/bin`.
@@ -46,16 +47,28 @@ The installer downloads the right binary, verifies its SHA-256 checksum, and ins
 To install somewhere else (remember: variables go on the `bash` side of the pipe):
 
 ```bash
-curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | MINICODE_INSTALL_DIR="$HOME/bin" bash
+curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | MINICODE_INSTALL_DIR="$HOME/bin" sh
 ```
 
 Pin a version:
 
 ```bash
-curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | MINICODE_VERSION=0.1.0 bash
+curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | MINICODE_VERSION=0.1.1 sh
 ```
 
 Or download the asset for your platform directly from the [releases page](https://github.com/Fiesta1862/opencode/releases).
+
+### Alpine Linux
+
+Alpine uses musl, so dedicated `linux-*-musl` binaries and `.apk` packages are included. On a minimal system, install `curl` first (`apk add curl`), then either run the installer (it detects Alpine automatically) or install the package directly:
+
+```bash
+curl -fSLO https://github.com/Fiesta1862/opencode/releases/latest/download/minicode-0.1.1-r0.x86_64.apk
+sudo apk add --allow-untrusted ./minicode-0.1.1-r0.x86_64.apk
+minicode --version
+```
+
+Use `aarch64` instead of `x86_64` on 64-bit ARM. The package is built with Alpine's `abuild` and signed with a throwaway key generated during the release build, so `--allow-untrusted` is required. Compare its SHA-256 with `checksums.txt` to verify the download. The package pulls `libstdc++` automatically, which is the only shared-library dependency of the Bun musl binary.
 
 ## Quick start
 
@@ -189,10 +202,13 @@ bun run dev            # run from source
 bun test               # unit + mock-server integration tests
 bun run typecheck      # tsc --noEmit
 bun run build          # binary for the current platform -> dist/
-bun run build:all      # all release targets (cross-compiles)
+bun run build:all      # all release targets (cross-compiles, including musl)
+bun run package:apk    # Alpine .apk packages from the musl binaries (needs Docker)
 ```
 
 The build injects the version from `package.json` and produces `dist/minicode-<os>-<arch>` plus `checksums.txt`.
+
+`package:apk` runs Alpine's `abuild` inside an `alpine:3.20` container to produce signed `x86_64` and `aarch64` packages. It requires Docker and the musl binaries from `build:all`. The generated packages are added to `dist/checksums.txt`.
 
 ### Publishing a release
 
@@ -203,7 +219,7 @@ git tag v0.1.1
 git push origin v0.1.1
 ```
 
-`.github/workflows/release.yml` runs type checks and tests, cross-compiles every target, generates checksums, and attaches the binaries plus `install.sh` to the GitHub Release. The `ci.yml` workflow runs on pushes and pull requests.
+`.github/workflows/release.yml` runs type checks and tests, cross-compiles every target, builds the Alpine packages, generates checksums, and attaches the binaries, `.apk` packages, and `install.sh` to the GitHub Release. The `ci.yml` workflow runs on pushes and pull requests.
 
 If you rename the repository or fork it, update the default `REPO` in `install.sh` (or set `MINICODE_REPO=owner/repo` when installing).
 
@@ -219,8 +235,10 @@ src/
   tools/              read, write, edit, glob, grep, list, shell
   ui/                 ANSI styling, streaming renderer, approvals
 tests/                unit + mock-server integration tests
-scripts/build.ts      cross-platform binary builds
-install.sh            release installer
+scripts/build.ts        cross-platform binary builds
+scripts/package-apk.ts  Alpine .apk driver (Docker)
+scripts/apk-inner.sh    abuild packaging inside Alpine
+install.sh              release installer
 ```
 
 ## Limitations

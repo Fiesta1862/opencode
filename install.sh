@@ -1,26 +1,28 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # minicode installer
 #
-#   curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | bash
+#   curl -fsSL https://github.com/Fiesta1862/opencode/releases/latest/download/install.sh | sh
 #
-# Environment variables (set them on the bash side of a pipe):
+# Environment variables (set them on the sh side of a pipe):
 #   MINICODE_REPO         GitHub repo, e.g. yourname/minicode (required if not baked in)
-#   MINICODE_VERSION      Version to install, e.g. 0.1.0 (default: latest)
+#   MINICODE_VERSION      Version to install, e.g. 0.1.1 (default: latest)
 #   MINICODE_INSTALL_DIR  Install directory (default: ~/.local/bin)
 #
-#   curl -fsSL .../install.sh | MINICODE_VERSION=0.1.0 bash
-set -euo pipefail
+#   curl -fsSL .../install.sh | MINICODE_VERSION=0.1.1 sh
+set -eu
 
 REPO="${MINICODE_REPO:-Fiesta1862/opencode}"
 VERSION="${MINICODE_VERSION:-latest}"
 VERSION="${VERSION#v}"
 INSTALL_DIR="${MINICODE_INSTALL_DIR:-$HOME/.local/bin}"
 
-if [[ "$REPO" == OWNER/* ]]; then
-  echo "This installer still points at the placeholder repo." >&2
-  echo "Set MINICODE_REPO=yourname/minicode and try again." >&2
-  exit 1
-fi
+case "$REPO" in
+  OWNER/*)
+    echo "This installer still points at the placeholder repo." >&2
+    echo "Set MINICODE_REPO=yourname/minicode and try again." >&2
+    exit 1
+    ;;
+esac
 
 info() { printf '\033[36m%s\033[0m\n' "$*"; }
 warn() { printf '\033[33mwarning:\033[0m %s\n' "$*" >&2; }
@@ -39,14 +41,26 @@ case "$(uname -m)" in
   *) fail "Unsupported architecture: $(uname -m)" ;;
 esac
 
-if [[ "$os" == windows && "$arch" != x64 ]]; then
+if [ "$os" = windows ] && [ "$arch" != x64 ]; then
   fail "Windows builds are only available for x64. Download the .exe from GitHub Releases."
 fi
 
-asset="minicode-${os}-${arch}"
-[[ "$os" == windows ]] && asset="${asset}.exe"
+libc=glibc
+if [ "$os" = linux ]; then
+  if [ -f /etc/alpine-release ] || ldd --version 2>&1 | head -n 1 | grep -qi musl; then
+    libc=musl
+  fi
+fi
 
-if [[ "$VERSION" == latest ]]; then
+asset="minicode-${os}-${arch}"
+if [ "$libc" = musl ]; then
+  asset="${asset}-musl"
+fi
+if [ "$os" = windows ]; then
+  asset="${asset}.exe"
+fi
+
+if [ "$VERSION" = latest ]; then
   base_url="https://github.com/${REPO}/releases/latest/download"
 else
   base_url="https://github.com/${REPO}/releases/download/v${VERSION}"
@@ -63,7 +77,7 @@ curl -fsSL "${base_url}/${asset}" -o "${tmp}/${asset}" || fail "Download failed:
 
 if curl -fsSL "${base_url}/checksums.txt" -o "${tmp}/checksums.txt" 2>/dev/null; then
   expected="$(awk -v a="$asset" '$2 == a { print $1 }' "${tmp}/checksums.txt")"
-  if [[ -n "$expected" ]]; then
+  if [ -n "$expected" ]; then
     if command -v sha256sum >/dev/null 2>&1; then
       actual="$(sha256sum "${tmp}/${asset}" | awk '{ print $1 }')"
     elif command -v shasum >/dev/null 2>&1; then
@@ -72,7 +86,7 @@ if curl -fsSL "${base_url}/checksums.txt" -o "${tmp}/checksums.txt" 2>/dev/null;
       actual=""
       warn "no sha256 tool found; skipping checksum verification"
     fi
-    if [[ -n "$actual" && "$actual" != "$expected" ]]; then
+    if [ -n "$actual" ] && [ "$actual" != "$expected" ]; then
       fail "Checksum mismatch for ${asset}. Refusing to install."
     fi
   fi

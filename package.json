@@ -1,6 +1,6 @@
 {
   "name": "minicode",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A minimal, fast, open-source coding agent for your terminal",
   "type": "module",
   "bin": {
@@ -12,7 +12,8 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "build": "bun run scripts/build.ts",
-    "build:all": "bun run scripts/build.ts --all"
+    "build:all": "bun run scripts/build.ts --all",
+    "package:apk": "bun run scripts/package-apk.ts"
   },
   "keywords": [
     "cli",

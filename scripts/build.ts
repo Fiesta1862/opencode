@@ -12,7 +12,9 @@ const version = pkg.version;
 
 const targets: Record<string, string> = {
   "linux-x64": "bun-linux-x64",
+  "linux-x64-musl": "bun-linux-x64-musl",
   "linux-arm64": "bun-linux-arm64",
+  "linux-arm64-musl": "bun-linux-arm64-musl",
   "darwin-x64": "bun-darwin-x64",
   "darwin-arm64": "bun-darwin-arm64",
   "windows-x64": "bun-windows-x64",
