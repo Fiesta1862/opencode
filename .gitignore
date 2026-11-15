@@ -7,3 +7,10 @@ dist/
 
 # Local config may contain API keys. Commit minicode.json.example instead.
 minicode.json
+
+# Android keystores and build artifacts
+*.jks
+keystore.properties
+android/.keystore.openhosttoken
+android/openhost/build/
+android/openhost/.cxx/

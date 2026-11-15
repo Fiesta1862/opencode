@@ -1,0 +1,68 @@
+name: OpenHost Android Release
+
+on:
+  push:
+    tags:
+      - "openhost-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: "11076708"
+
+      - name: Prepare signing (optional)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "No signing secrets configured; the workflow will publish a debug-signed APK."
+            echo "SIGNED=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > .keystore.jks
+          cat > keystore.properties <<EOF
+          storeFile=../.keystore.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+          echo "SIGNED=true" >> "$GITHUB_ENV"
+
+      - name: Build APK
+        run: |
+          if [ "$SIGNED" = "true" ]; then
+            ./gradlew :openhost:assembleRelease
+            echo "APK_PATH=openhost/build/outputs/apk/release/openhost-release.apk" >> "$GITHUB_ENV"
+          else
+            ./gradlew :openhost:assembleDebug
+            echo "APK_PATH=openhost/build/outputs/apk/debug/openhost-debug.apk" >> "$GITHUB_ENV"
+          fi
+
+      - name: Publish APK to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.APK_PATH }}
+          generate_release_notes: true

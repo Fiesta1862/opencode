@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "minicode-android"
-include(":app")
+include(":app", ":openhost")
