@@ -39,7 +39,7 @@ jobs:
           fi
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > .keystore.jks
           cat > keystore.properties <<EOF
-          storeFile=../.keystore.jks
+          storeFile=.keystore.jks
           storePassword=$KEYSTORE_PASSWORD
           keyAlias=$KEY_ALIAS
           keyPassword=$KEY_PASSWORD
@@ -53,18 +53,18 @@ jobs:
             echo "APK_PATH=openhost/build/outputs/apk/release/openhost-release.apk" >> "$GITHUB_ENV"
           else
             ./gradlew :openhost:assembleDebug
-            echo "APK_PATH=openhost/build/outputs/apk/debug/openhost-debug.apk" >> "$GITHUB_ENV"
+            cp openhost/build/outputs/apk/debug/openhost-debug.apk openhost-ci-debug.apk
+            echo "APK_PATH=openhost-ci-debug.apk" >> "$GITHUB_ENV"
           fi
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: openhost-apk
-          path: ${{ env.APK_PATH }}
+          path: android/${{ env.APK_PATH }}
 
       - name: Publish APK to GitHub release
         if: startsWith(github.ref, 'refs/tags/openhost-v')
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.APK_PATH }}
-          generate_release_notes: true
+          files: android/${{ env.APK_PATH }}
