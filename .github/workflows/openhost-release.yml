@@ -25,11 +25,6 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: "11076708"
-
       - name: Prepare signing (optional)
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -61,7 +56,14 @@ jobs:
             echo "APK_PATH=openhost/build/outputs/apk/debug/openhost-debug.apk" >> "$GITHUB_ENV"
           fi
 
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhost-apk
+          path: ${{ env.APK_PATH }}
+
       - name: Publish APK to GitHub release
+        if: startsWith(github.ref, 'refs/tags/openhost-v')
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.APK_PATH }}
