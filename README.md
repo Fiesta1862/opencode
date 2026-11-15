@@ -1,6 +1,6 @@
 # minicode
 
-A minimal, fast AI coding agent for your terminal — built with TypeScript and Bun, distributed as a single binary from GitHub Releases.
+A minimal, fast AI coding agent for your terminal and Android — the CLI is built with TypeScript and Bun, the Android app with Kotlin and Jetpack Compose. The CLI is distributed as a single binary from GitHub Releases.
 
 > Hosted at [Fiesta1862/opencode](https://github.com/Fiesta1862/opencode). The application is called **minicode**; the repository name is historical and can be renamed later (GitHub keeps redirects).
 
@@ -31,6 +31,7 @@ A minimal, fast AI coding agent for your terminal — built with TypeScript and 
 - **Sessions** — conversations are saved automatically. Resume with `--continue` or `--session <id>`.
 - **Single binary** — no Node, Bun, or `node_modules` required to run a release build. glibc and musl (Alpine) builds included.
 - **Alpine packages** — installable `.apk` packages for `x86_64` and `aarch64`.
+- **Native Android app** — Kotlin/Compose client with the same agent loop and file tools. Files only: no shell, builds, or tests on the phone.
 - **Scriptable** — `minicode run "..."` for one-shot tasks, with a read-only-by-default policy unless `--yes` is passed.
 - **No runtime dependencies** — the CLI and its TUI are implemented with the standard library.
 
@@ -69,6 +70,54 @@ minicode --version
 ```
 
 Use `aarch64` instead of `x86_64` on 64-bit ARM. The package is built with Alpine's `abuild` and signed with a throwaway key generated during the release build, so `--allow-untrusted` is required. Compare its SHA-256 with `checksums.txt` to verify the download. The package pulls `libstdc++` automatically, which is the only shared-library dependency of the Bun musl binary. The curl installer also installs `libstdc++` when run as root on Alpine; for non-root installs run `apk add libstdc++` first.
+
+> **Alpine `.apk` files are Linux packages, not Android apps.** Android cannot install them and reports *"There was a problem while parsing the package."* Use the native Android app below instead.
+
+### Android app
+
+A native Kotlin/Jetpack Compose client lives in [`android/`](android/). It runs the same OpenAI-compatible agent loop on the phone, with file tools and approval prompts. It does **not** have a shell: no commands, builds, or tests.
+
+Download and install the signed APK (Android 8.0 / API 26 or newer):
+
+```bash
+curl -fL -o minicode-android.apk \
+  https://github.com/Fiesta1862/opencode/releases/download/v0.1.2/minicode-android-0.1.0.apk
+adb install minicode-android.apk
+```
+
+You can also download the APK on the phone and tap it, allowing installs from your browser or file manager when Android asks.
+
+**Setup**
+
+1. Open **minicode → Settings**.
+2. Enter an OpenAI-compatible **base URL** (default `https://api.openai.com/v1`), **API key**, and **model**. Local servers can use `http://` and a blank key.
+3. Optionally choose a **workspace folder** with Android's folder picker. Without one, files live in app-private storage.
+4. Ask the agent to read, create, or edit files. Writes and edits ask for approval unless auto-approve is enabled.
+
+<table>
+  <tr>
+    <td><img src="docs/android/01-home.png" width="240" alt="minicode home screen"></td>
+    <td><img src="docs/android/02-chat.png" width="240" alt="minicode conversation with a write_file tool call"></td>
+    <td><img src="docs/android/04-approval.png" width="240" alt="write approval dialog"></td>
+  </tr>
+  <tr>
+    <td align="center">Home</td>
+    <td align="center">Streaming agent + tool activity</td>
+    <td align="center">Write approval</td>
+  </tr>
+  <tr>
+    <td><img src="docs/android/06-settings.png" width="240" alt="model and agent settings"></td>
+    <td><img src="docs/android/08-folder-picker.png" width="240" alt="Android folder picker"></td>
+    <td><img src="docs/android/09-saf-workspace.png" width="240" alt="selected workspace folder"></td>
+  </tr>
+  <tr>
+    <td align="center">Model settings</td>
+    <td align="center">Workspace picker</td>
+    <td align="center">Folder-backed workspace</td>
+  </tr>
+</table>
+
+The Android app stores conversations as JSON in app-private storage and keeps the API key in the app's private preferences. It is signed with a project release key; future updates must be signed with the same key.
 
 ## Quick start
 
@@ -210,6 +259,19 @@ The build injects the version from `package.json` and produces `dist/minicode-<o
 
 `package:apk` runs Alpine's `abuild` inside an `alpine:3.20` container to produce signed `x86_64` and `aarch64` packages. It requires Docker and the musl binaries from `build:all`. The generated packages are added to `dist/checksums.txt`.
 
+### Android app
+
+Requires JDK 17+ and Android SDK platform 35 with build-tools 35.0.0. Point `android/local.properties` at the SDK (`sdk.dir=/path/to/android-sdk`), then:
+
+```bash
+cd android
+./gradlew app:testDebugUnitTest
+./gradlew app:assembleDebug     # app/build/outputs/apk/debug/app-debug.apk
+./gradlew app:assembleRelease   # signed when keystore.properties is present
+```
+
+Release signing reads `android/keystore.properties` and the keystore it points at; both are gitignored. Without them, `assembleRelease` produces an unsigned APK. Keep that keystore safe: Android requires the same signing key for future updates.
+
 ### Publishing a release
 
 On GitHub, with this repository pushed to `Fiesta1862/opencode`:
@@ -239,6 +301,13 @@ scripts/build.ts        cross-platform binary builds
 scripts/package-apk.ts  Alpine .apk driver (Docker)
 scripts/apk-inner.sh    abuild packaging inside Alpine
 install.sh              release installer
+android/                native Android app (Kotlin + Jetpack Compose)
+  app/src/main/java/com/fiesta1862/minicode/
+    agent/              agent loop, approvals, system prompt
+    llm/                OpenAI-compatible SSE client
+    tools/              read, write, edit, list, glob, grep
+    workspace/          app storage + Storage Access Framework
+    ui/                 chat, settings, Markdown renderer, theme
 ```
 
 ## Limitations
@@ -248,6 +317,8 @@ install.sh              release installer
 - Markdown rendering is intentionally lightweight.
 - Shell commands run with your user permissions.
 - Windows shell execution uses PowerShell; Unix uses `bash`/`sh`.
+- The Android app has no shell or `run_command` tool by design: it can only read, write, edit, list, glob, and grep files. Builds and tests still need the CLI on a computer.
+- On Android, folders outside the selected workspace are inaccessible unless you pick them through the system folder picker.
 
 ## License
 
